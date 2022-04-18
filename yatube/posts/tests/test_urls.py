@@ -62,3 +62,10 @@ class UrlsTests(TestCase):
             with self.subTest(adress=adress):
                 response = self.authorized_client.get(adress)
                 self.assertTemplateUsed(response, template)
+
+    def test_unexisting_page(self):
+        """Запрос к несуществующей странице вернет ошибку 404
+        и использует кастомный шаблон."""
+        response = self.authorized_client.get('/unexisting_page/')
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, 'core/404.html')

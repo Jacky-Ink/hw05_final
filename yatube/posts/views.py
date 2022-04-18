@@ -23,11 +23,10 @@ def paginator_of_page(request, posts):
 @cache_page(20, key_prefix='index_page')
 def index(request: HttpRequest) -> HttpResponse:
     """Модуль отвечающий за главную страницу."""
-    post_list = Post.objects.all()
+    post_list = Post.objects.select_related('group', 'author')
     page_obj = paginator_of_page(request, post_list)
     context = {
         'page_obj': page_obj,
-        'post_list': post_list,
     }
     return render(request, 'posts/index.html', context)
 
@@ -74,6 +73,7 @@ def post_detail(request: HttpRequest, post_id) -> HttpResponse:
         'title': title,
         'count_of_posts': count_of_posts,
         'post': post,
+        'post_id': post_id,
         'comment_form': comment_form,
         'comments': comments,
     }

@@ -10,15 +10,15 @@ from django.urls import reverse
 
 from ..models import Group, Post, User, Comment
 
-USERNAME = 'user_author'
-USERNAME_ANOTHER = 'another_user'
-TITLE = 'Наименование группы'
-SLUG = 'text-slug'
-DESCRIPTION = 'Текстовое описание'
+USERNAME = 'Geralt of Rivia'
+USERNAME_ANOTHER = 'Yennefer'
+TITLE = 'The Wither'
+SLUG = 'Coin'
+DESCRIPTION = 'Фан база'
 TEXT = 'Тестовый текст'
 NEW_TEXT = 'Новый текст'
 CHANGE_TEXT = 'Измененный пост'
-COMMENT_TEXT = 'Текст комментария'
+COMMENT_TEXT = 'Топовый сериал'
 SMALL_GIF = (
     b'\x47\x49\x46\x38\x39\x61\x02\x00'
     b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -36,7 +36,6 @@ class PostFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        # Создадим запись в БД для проверки доступности адреса task/test-slug/
         cls.user_author = User.objects.create_user(USERNAME)
         cls.another_user = User.objects.create_user(USERNAME_ANOTHER)
         cls.group = Group.objects.create(
@@ -61,20 +60,15 @@ class PostFormTests(TestCase):
         super().tearDownClass()
 
     def setUp(self):
-        # Создаем неавторизованный клиент
         self.guest_client = Client()
-        # Создаем второй клиент
         self.authorized_client = Client()
-        # Создаем трейтий клиент
         self.author_client = Client()
-        # Авторизуем пользователя
         self.authorized_client.force_login(self.another_user)
         # Автор поста
         self.author_client.force_login(self.user_author)
 
     def test_create_post(self):
         """Валидная форма создает запись в Post."""
-        # Подсчитаем количество записей в Post
         posts_count = Post.objects.count()
         uploaded = SimpleUploadedFile(
             name='small.gif',
@@ -91,13 +85,10 @@ class PostFormTests(TestCase):
             data=form_data,
             follow=True,
         )
-        # Проверяем, сработал ли редирект
         self.assertRedirects(response, reverse(
             'posts:profile', kwargs={'username': self.another_user.username}),
         )
-        # Проверяем, увеличилось ли число постов
         self.assertEqual(Post.objects.count(), posts_count + 1)
-        # Проверяем, что создалась запись с нашим слагом
         self.assertTrue(
             Post.objects.filter(
                 text=NEW_TEXT,
@@ -124,13 +115,10 @@ class PostFormTests(TestCase):
             data=form_data,
             follow=True,
         )
-        # Проверяем, сработал ли редирект
         self.assertRedirects(response, reverse(
             'posts:post_detail', kwargs={'post_id': self.post.id}),
         )
-        # Проверяем, увеличилось ли число постов
         self.assertEqual(Post.objects.count(), posts_count)
-        # Проверяем, что создалась запись с нашим слагом
         self.assertTrue(
             Post.objects.filter(
                 text=CHANGE_TEXT,

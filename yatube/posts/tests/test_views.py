@@ -242,22 +242,18 @@ class CacheViewsTest(TestCase):
     def setUp(self):
         self.guest_client = Client()
 
-    def test_cache_post_index(self):
-        cache_post = Post.objects.create(
-            text=CACHE_TEXT,
-            author=self.user_author,
-            group=self.group
-        )
-        response_one = self.guest_client.get(reverse('posts:index'))
-        post_content = response_one.content
-        cache_post.delete()
-        responce_two = self.guest_client.get(reverse('posts:index'))
-        post_content_two = responce_two.content
-        self.assertEqual(post_content, post_content_two)
+    def test_index_cache(self):
+        """Кеширование index.html работает."""
+        content = self.guest_client.get(
+            reverse('posts:index')).content
+        self.post.delete()
+        content_cached = self.guest_client.get(
+            reverse('posts:index')).content
+        self.assertEqual(content, content_cached)
         cache.clear()
-        response_one = self.guest_client.get(reverse('posts:index'))
-        post_content_three = response_one.content
-        self.assertNotEquals(post_content, post_content_three)
+        content_clear = self.guest_client.get(
+            reverse('posts:index')).content
+        self.assertNotEqual(content, content_clear)
 
 
 class PaginatorViewsTest(TestCase):

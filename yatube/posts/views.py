@@ -3,7 +3,6 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.cache import cache_page
 
 from .forms import CommentForm, PostForm
 from .models import Follow, Post, Group, User
@@ -20,10 +19,9 @@ def paginator_of_page(request, posts):
     return paginator.get_page(page_number)
 
 
-@cache_page(20, key_prefix='index_page')
 def index(request: HttpRequest) -> HttpResponse:
     """Модуль отвечающий за главную страницу."""
-    post_list = Post.objects.select_related('group', 'author')
+    post_list = Post.objects.all()
     page_obj = paginator_of_page(request, post_list)
     context = {
         'page_obj': page_obj,
@@ -148,7 +146,7 @@ def profile_follow(request: HttpRequest, username) -> HttpResponse:
     user = request.user
     if user != author:
         Follow.objects.get_or_create(user=user, author=author)
-    return redirect('posts:follow_index')
+    return redirect('posts:profile', username=username)
 
 
 @login_required
@@ -158,6 +156,7 @@ def profile_unfollow(request: HttpRequest, username) -> HttpResponse:
     user = request.user
     if user != author:
         Follow.objects.filter(
-            user=request.user, author__username=username
+            user=request.user,
+            author__username=username
         ).delete()
-    return redirect('posts:follow_index')
+    return redirect('posts:profile', username=username)

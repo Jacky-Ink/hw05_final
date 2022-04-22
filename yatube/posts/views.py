@@ -1,22 +1,14 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+from posts.utils import paginator_of_page
+
 from .forms import CommentForm, PostForm
-from .models import Follow, Post, Group, User
+from .models import Follow, Group, Post, User
 
 User = get_user_model()
-
-NUMBER_OF_POSTS = 10
-
-
-def paginator_of_page(request, posts):
-    """Модуль отвечающий за разбитие текта на страницы."""
-    paginator = Paginator(posts, NUMBER_OF_POSTS)
-    page_number = request.GET.get('page')
-    return paginator.get_page(page_number)
 
 
 def index(request: HttpRequest) -> HttpResponse:
@@ -25,6 +17,7 @@ def index(request: HttpRequest) -> HttpResponse:
     page_obj = paginator_of_page(request, post_list)
     context = {
         'page_obj': page_obj,
+        'index': True
     }
     return render(request, 'posts/index.html', context)
 
@@ -32,7 +25,7 @@ def index(request: HttpRequest) -> HttpResponse:
 def group_posts(request: HttpRequest, slug) -> HttpResponse:
     """Модуль отвечающий за страницу сообщества."""
     group = get_object_or_404(Group, slug=slug)
-    post_list = Post.objects.filter(group=group)
+    post_list = group.posts.all()
     page_obj = paginator_of_page(request, post_list)
     context = {
         'group': group,
@@ -66,9 +59,7 @@ def post_detail(request: HttpRequest, post_id) -> HttpResponse:
     comment_form = CommentForm(request.POST or None)
     comments = post.comments.all()
     count_of_posts = post.author.posts.all().count()
-    title = f'Пост {post.text[:30]}'
     context = {
-        'title': title,
         'count_of_posts': count_of_posts,
         'post': post,
         'post_id': post_id,
@@ -152,11 +143,10 @@ def profile_follow(request: HttpRequest, username) -> HttpResponse:
 @login_required
 def profile_unfollow(request: HttpRequest, username) -> HttpResponse:
     """Модуль отвечающий за отписку от автора."""
-    author = get_object_or_404(User, username=username)
-    user = request.user
-    if user != author:
-        Follow.objects.filter(
-            user=request.user,
-            author__username=username
-        ).delete()
+    user_follower = get_object_or_404(
+        Follow,
+        user=request.user,
+        author__username=username
+    )
+    user_follower.delete()
     return redirect('posts:profile', username=username)

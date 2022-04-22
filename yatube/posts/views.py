@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.cache import cache_page
 
 from posts.utils import paginator_of_page
 
@@ -12,7 +11,6 @@ from .models import Follow, Group, Post, User
 User = get_user_model()
 
 
-@cache_page(20, key_prefix='index_page')
 def index(request: HttpRequest) -> HttpResponse:
     """Модуль отвечающий за главную страницу."""
     post_list = Post.objects.all()

@@ -25,7 +25,6 @@ NEW_HEADER = 'Новый сериал'
 NUMBER_OF_POSTS_ALL = 13
 NUMBER_OF_POSTS_PAGE = 10
 NUMBER_OF_POSTS_REMAINDER = 3
-CACHE_TEXT = 'Проверка кеша'
 SMALL_GIF = (
     b'\x47\x49\x46\x38\x39\x61\x02\x00'
     b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -240,20 +239,23 @@ class CacheViewsTest(TestCase):
             )
 
     def setUp(self):
-        self.guest_client = Client()
+        self.authorized_client = Client()
 
-    def test_cache_post_index(self):
-        cache_post = Post.objects.create(
-            text=CACHE_TEXT,
-            author=self.user_author,
-            group=self.group
+    def test_cash_work(self):
+        response = self.authorized_client.get(reverse('posts:index'))
+        first_object = response.content
+        form_data = {
+            'title': 'Тестовый заголовок2221111',
+            'text': 'Тестовый текст22221111',
+        }
+        response = self.authorized_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+            follow=True
         )
-        response_one = self.guest_client.get(reverse('posts:index'))
-        post_content = response_one.content
-        cache_post.delete()
-        responce_two = self.guest_client.get(reverse('posts:index'))
-        post_content_two = responce_two.content
-        self.assertEqual(post_content, post_content_two)
+        response = self.authorized_client.get(reverse('posts:index'))
+        second_object = response.content
+        self.assertEqual(first_object, second_object)
 
 
 class PaginatorViewsTest(TestCase):
